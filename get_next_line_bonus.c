@@ -1,16 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: gabach <gabach@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 15:18:43 by gabach            #+#    #+#             */
-/*   Updated: 2025/11/20 17:21:05 by gabach           ###   ########lyon.fr   */
+/*   Updated: 2025/11/20 17:20:16 by gabach           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
+#include <stdio.h>
+#include <fcntl.h>
 
 static int	load_buffer(int fd, t_rest *rest, char buffer[BUFFER_SIZE])
 {
@@ -144,20 +146,18 @@ char	*get_next_line(int fd)
 }
 
 /*
-#include <stdio.h>
-#include <fcntl.h>
 
 int	main(void)
 {
 	int	index = 1;
-	int	fd1 = open("files/test1.txt", O_RDONLY);
-	int	fd2 = open("files/test2.txt", O_RDONLY);
-	int	fd3 = open("files/test3.txt", O_RDONLY);
+	int	fd1 = open("test.txt", O_RDONLY);
+	int	fd2 = open("test2.txt", O_RDONLY);
+	int	fd3 = open("test3.txt", O_RDONLY);
 	char	*line = get_next_line(fd1);
 	char	*line2 = get_next_line(fd2);
 	char	*line3 = get_next_line(fd3);
 
-	while (line || line2 || line3)
+	while (line)
 	{
 		printf("line : %i\nl1 : %sl2 : %sl3 : %s\n", index, line, line2, line3);
 		free(line);
@@ -171,36 +171,17 @@ int	main(void)
 
 }
 
-int	main(int argc, char **argv)
+int	main(void)
 {
-	(void)argc;
-	int		index = 1;
-	int		fd1 = open(argv[1], O_RDONLY);
+	int	fd1 = open("read_error.txt", O_RDONLY);
 	char	*line = get_next_line(fd1);
 
-	while (index < 2)
+	while (line)
 	{
-		printf("line %i : %s", index, line);
+		printf("l1 : %s", line);
 		free(line);
 		line = get_next_line(fd1);
-		index++;
 	}
-	printf("line %i : %s", index, line);
-	free(line);
-	close(fd1);
-	line = get_next_line(fd1);
-	printf("line %i : %s", index, line);
-	free(line);
-	fd1 = open(argv[1], O_RDONLY);
-	line = get_next_line(fd1);
-	index = 1;
-	while (index < 6)
-	{
-		printf("line %i : %s", index, line);
-		free(line);
-		line = get_next_line(fd1);
-		index++;
-	}
-	close(fd1);
+
 }
 */
