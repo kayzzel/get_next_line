@@ -12,60 +12,47 @@
 
 #include "get_next_line.h"
 
-static int	load_buffer(int fd, t_rest *rest, char buffer[BUFFER_SIZE])
+static char	*ft_realloc(char *line, int to_add, char buffer[BUFFER_SIZE])
 {
-	int	index;
-	int	index_b;
+	int		index_l;
+	int		index_b;
+	char	*new_line;
 
-	if (rest->rests[0] == NULL)
+	index_l = 0;
+	if (line)
+		while (line[index_l] != '\0')
+			index_l++;
+	new_line = malloc(sizeof(char) * (index_l + to_add + 1));
+	if (!new_line)
+		return (NULL);
+	index_l = 0;
+	if (line)
 	{
-		rest->fds[0] = fd;
-		rest->fds[1] = -1;
-		return (0);
+		index_l = -1;
+		while (line[++index_l])
+			new_line[index_l] = line[index_l];
 	}
-	index = -1;
 	index_b = -1;
-	while (rest->fds[++index] != -1)
-	{
-		if (rest->fds[index] == fd)
-		{
-			while (++index_b < BUFFER_SIZE - 1 && rest->rests[index][index_b])
-				buffer[index_b] = rest->rests[index][index_b];
-			buffer[index_b] = rest->rests[index][index_b];
-			return (index);
-		}
-	}
-	rest->fds[index] = fd;
-	rest->fds[index + 1] = -1;
-	return (index);
+	while (++index_b < to_add)
+		new_line[index_l + index_b] = buffer[index_b];
+	free(line);
+	new_line[index_l + index_b] = '\0';
+	return (new_line);
 }
 
-static void	close_gnl(int fd, t_rest *rest)
+static void	load_buffer(int fd, char rest[1024][BUFFER_SIZE], char buffer[BUFFER_SIZE])
 {
 	int	index;
-	int	index_last;
 
 	index = 0;
-	index_last = 0;
-	while (rest->fds[index_last] != -1)
-		index_last++;
-	while (rest->fds[index] != fd)
-		index++;
-	free(rest->rests[index]);
-	if (index_last == index)
+	while (rest[fd][index] != '\0' && index < BUFFER_SIZE)
 	{
-		rest->rests[index] = NULL;
-		rest->fds[index] = -1;
-		return ;
+		buffer[index] = rest[fd][index];
+		index++;
 	}
-	rest->rests[index] = rest->rests[index_last];
-	rest->fds[index] = rest->fds[index_last];
-	rest->rests[index_last] = NULL;
-	rest->fds[index_last] = -1;
-	return ;
 }
 
-static char	*load_line(int fd, char buffer[BUFFER_SIZE], t_rest *rest)
+static char	*load_line(int fd, char buffer[BUFFER_SIZE])
 {
 	int		index;
 	char	*line;
@@ -81,8 +68,6 @@ static char	*load_line(int fd, char buffer[BUFFER_SIZE], t_rest *rest)
 		if (buffer[0] != '\0')
 			line = ft_realloc(line, BUFFER_SIZE + 1, buffer);
 		read_result = read(fd, buffer, BUFFER_SIZE);
-		if (read_result == 0 || read_result == -1)
-			close_gnl(fd, rest);
 		if (read_result == -1)
 		{
 			free(line);
@@ -94,7 +79,7 @@ static char	*load_line(int fd, char buffer[BUFFER_SIZE], t_rest *rest)
 	}
 }
 
-static void	save_rest(int fd_index, t_rest *rest, char buffer[BUFFER_SIZE])
+static void	save_rest(int fd, char rests[1024][BUFFER_SIZE], char buffer[BUFFER_SIZE])
 {
 	int	start;
 	int	len;
@@ -109,50 +94,41 @@ static void	save_rest(int fd_index, t_rest *rest, char buffer[BUFFER_SIZE])
 	len = 0;
 	while (buffer[start + len] && (start + len) < BUFFER_SIZE)
 		len++;
-	free(rest->rests[fd_index]);
-	rest->rests[fd_index] = malloc(sizeof(char) * (len + 1));
-	if (rest->rests[fd_index] == NULL)
-		return ;
 	index = 0;
 	while (index < len)
 	{
-		rest->rests[fd_index][index] = buffer[start + index];
+		rests[fd][index] = buffer[start + index];
 		index++;
 	}
-	rest->rests[fd_index][index] = '\0';
+	rests[fd][index] = '\0';
 }
 
 char	*get_next_line(int fd)
 {
-	static t_rest	rest = {0};
-	char			*buffer;
+	static char	rests[1024][BUFFER_SIZE];
+	char			buffer[BUFFER_SIZE];
 	char			*line;
-	int				fd_index;
 
 	if (fd > 1024 || fd < 0 || BUFFER_SIZE < 1)
 		return (NULL);
-	buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
-	if (buffer == NULL)
-		return (NULL);
 	buffer[0] = '\0';
-	fd_index = load_buffer(fd, &rest, buffer);
-	line = load_line(fd, buffer, &rest);
+	load_buffer(fd, rests, buffer);
+	line = load_line(fd, buffer);
 	if (line)
-		save_rest(fd_index, &rest, buffer);
-	free(buffer);
+		save_rest(fd, rests, buffer);
 	return (line);
 }
 
-/*
 #include <stdio.h>
 #include <fcntl.h>
 
+/*
 int	main(void)
 {
 	int	index = 1;
-	int	fd1 = open("files/test1.txt", O_RDONLY);
-	int	fd2 = open("files/test2.txt", O_RDONLY);
-	int	fd3 = open("files/test3.txt", O_RDONLY);
+	int	fd1 = open("test1.txt", O_RDONLY);
+	int	fd2 = open("test2.txt", O_RDONLY);
+	int	fd3 = open("test3.txt", O_RDONLY);
 	char	*line = get_next_line(fd1);
 	char	*line2 = get_next_line(fd2);
 	char	*line3 = get_next_line(fd3);
@@ -170,6 +146,7 @@ int	main(void)
 	}
 
 }
+*/
 
 int	main(int argc, char **argv)
 {
@@ -185,22 +162,5 @@ int	main(int argc, char **argv)
 		line = get_next_line(fd1);
 		index++;
 	}
-	printf("line %i : %s", index, line);
-	free(line);
-	close(fd1);
-	line = get_next_line(fd1);
-	printf("line %i : %s", index, line);
-	free(line);
-	fd1 = open(argv[1], O_RDONLY);
-	line = get_next_line(fd1);
-	index = 1;
-	while (index < 6)
-	{
-		printf("line %i : %s", index, line);
-		free(line);
-		line = get_next_line(fd1);
-		index++;
-	}
 	close(fd1);
 }
-*/

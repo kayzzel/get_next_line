@@ -24,17 +24,8 @@
 #  define BUFFER_SIZE 42
 # endif
 
-// STRUCS
-
-typedef struct s_rest
-{
-	int		fds[1025];
-	char	*rests[1025];
-}	t_rest;
-
 // FUNCTIONS
 
 char	*get_next_line(int fd);
-char	*ft_realloc(char *line, int to_add, char buffer[BUFFER_SIZE]);
 
 #endif
