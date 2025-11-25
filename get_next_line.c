@@ -52,7 +52,7 @@ static void	load_buffer(int fd, char rest[1024][BUFFER_SIZE], char buffer[BUFFER
 	}
 }
 
-static char	*load_line(int fd, char buffer[BUFFER_SIZE])
+static char	*load_line(int fd, char rests[1024][BUFFER_SIZE], char buffer[BUFFER_SIZE])
 {
 	int		index;
 	char	*line;
@@ -68,6 +68,8 @@ static char	*load_line(int fd, char buffer[BUFFER_SIZE])
 		if (buffer[0] != '\0')
 			line = ft_realloc(line, BUFFER_SIZE + 1, buffer);
 		read_result = read(fd, buffer, BUFFER_SIZE);
+		if (read_result == -1 || read_result == 0)
+			rests[fd][0] = '\0';
 		if (read_result == -1)
 		{
 			free(line);
@@ -113,16 +115,16 @@ char	*get_next_line(int fd)
 		return (NULL);
 	buffer[0] = '\0';
 	load_buffer(fd, rests, buffer);
-	line = load_line(fd, buffer);
+	line = load_line(fd, rests, buffer);
 	if (line)
 		save_rest(fd, rests, buffer);
 	return (line);
 }
 
+/*
 #include <stdio.h>
 #include <fcntl.h>
 
-/*
 int	main(void)
 {
 	int	index = 1;
@@ -146,7 +148,6 @@ int	main(void)
 	}
 
 }
-*/
 
 int	main(int argc, char **argv)
 {
@@ -164,3 +165,4 @@ int	main(int argc, char **argv)
 	}
 	close(fd1);
 }
+*/
