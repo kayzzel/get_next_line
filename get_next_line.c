@@ -6,14 +6,14 @@
 /*   By: gabach <gabach@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 15:18:43 by gabach            #+#    #+#             */
-/*   Updated: 2025/11/26 18:38:20 by gabach           ###   ########lyon.fr   */
+/*   Updated: 2025/11/26 19:10:57 by gabach           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-static char	*ft_realloc(char *line, int to_add, char rests[1025][BUFFER_SIZE]\
-, int fd)
+static char	*ft_realloc(char *line, int to_add, \
+char rests[1025][BUFFER_SIZE + 1], int fd)
 {
 	int		index_l;
 	int		index_b;
@@ -41,7 +41,7 @@ static char	*ft_realloc(char *line, int to_add, char rests[1025][BUFFER_SIZE]\
 	return (new_line);
 }
 
-static char	*load_line(int fd, char rests[1025][BUFFER_SIZE], char	*line)
+static char	*load_line(int fd, char rests[1025][BUFFER_SIZE + 1], char	*line)
 {
 	int		index;
 	int		read_result;
@@ -70,7 +70,7 @@ static char	*load_line(int fd, char rests[1025][BUFFER_SIZE], char	*line)
 	}
 }
 
-static void	save_rest(int fd, char rests[1025][BUFFER_SIZE])
+static void	save_rest(int fd, char rests[1025][BUFFER_SIZE + 1])
 {
 	int	start;
 	int	len;
@@ -99,10 +99,10 @@ static void	save_rest(int fd, char rests[1025][BUFFER_SIZE])
 
 char	*get_next_line(int fd)
 {
-	static char	rests[1025][BUFFER_SIZE];
+	static char	rests[1025][BUFFER_SIZE + 1];
 	char		*line;
 
-	if (fd > 1025 || fd < 0 || BUFFER_SIZE < 1)
+	if (fd > 1024 || fd < 0 || BUFFER_SIZE < 1)
 		return (NULL);
 	line = load_line(fd, rests, NULL);
 	if (line)
@@ -117,25 +117,23 @@ char	*get_next_line(int fd)
 int	main(void)
 {
 	int	index = 1;
-	int	fd1 = open("test1.txt", O_RDONLY);
-	int	fd2 = open("test2.txt", O_RDONLY);
-	int	fd3 = open("test.txt", O_RDONLY);
+	int	fd1 = open("read_error.txt", O_RDONLY);
+	int	fd2 = open("lines_around_10.txt", O_RDONLY);
 	char	*line = get_next_line(fd1);
 	char	*line2 = get_next_line(fd2);
-	char	*line3 = get_next_line(fd3);
 
-	while (line || line2 || line3)
+	while (index < 2)
 	{
-		printf("line : %i\nl1 : %sl2 : %sl3 : %s\n", index, line, line2, line3);
+		printf("line : %i\nl1 : %sl2 : %s\n", index, line, line2);
 		free(line);
 		free(line2);
-		free(line3);
 		line = get_next_line(fd1);
 		line2 = get_next_line(fd2);
-		line3 = get_next_line(fd3);
 		index++;
 	}
-
+	printf("line : %i\nl1 : %sl2 : %s\n", index, line, line2);
+	free(line);
+	free(line2);
 }
 
 int	main(int argc, char **argv)
