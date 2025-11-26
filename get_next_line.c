@@ -6,7 +6,7 @@
 /*   By: gabach <gabach@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 15:18:43 by gabach            #+#    #+#             */
-/*   Updated: 2025/11/20 17:21:05 by gabach           ###   ########lyon.fr   */
+/*   Updated: 2025/11/26 14:46:25 by gabach           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,24 +23,25 @@ static char	*ft_realloc(char *line, int to_add, char buffer[BUFFER_SIZE])
 		while (line[index_l] != '\0')
 			index_l++;
 	new_line = malloc(sizeof(char) * (index_l + to_add + 1));
-	if (!new_line)
-		return (NULL);
 	index_l = 0;
-	if (line)
+	if (line && new_line)
 	{
 		index_l = -1;
 		while (line[++index_l])
 			new_line[index_l] = line[index_l];
 	}
+	free(line);
+	if (!new_line)
+		return (NULL);
 	index_b = -1;
 	while (++index_b < to_add)
 		new_line[index_l + index_b] = buffer[index_b];
-	free(line);
 	new_line[index_l + index_b] = '\0';
 	return (new_line);
 }
 
-static void	load_buffer(int fd, char rest[1024][BUFFER_SIZE], char buffer[BUFFER_SIZE])
+static void	load_buffer(int fd, char rest[1025][BUFFER_SIZE], \
+char buffer[BUFFER_SIZE])
 {
 	int	index;
 
@@ -50,15 +51,15 @@ static void	load_buffer(int fd, char rest[1024][BUFFER_SIZE], char buffer[BUFFER
 		buffer[index] = rest[fd][index];
 		index++;
 	}
+	buffer[index] = '\0';
 }
 
-static char	*load_line(int fd, char rests[1024][BUFFER_SIZE], char buffer[BUFFER_SIZE])
+static char	*load_line(int fd, char rests[1025][BUFFER_SIZE], \
+char buffer[BUFFER_SIZE], char	*line)
 {
 	int		index;
-	char	*line;
 	int		read_result;
 
-	line = NULL;
 	while (1)
 	{
 		index = -1;
@@ -66,7 +67,9 @@ static char	*load_line(int fd, char rests[1024][BUFFER_SIZE], char buffer[BUFFER
 			if (buffer[index] == '\n')
 				return (ft_realloc(line, index + 1, buffer));
 		if (buffer[0] != '\0')
-			line = ft_realloc(line, BUFFER_SIZE + 1, buffer);
+			line = ft_realloc(line, index, buffer);
+		if (buffer[0] != '\0' && line == NULL)
+			return (NULL);
 		read_result = read(fd, buffer, BUFFER_SIZE);
 		if (read_result == -1 || read_result == 0)
 			rests[fd][0] = '\0';
@@ -81,7 +84,8 @@ static char	*load_line(int fd, char rests[1024][BUFFER_SIZE], char buffer[BUFFER
 	}
 }
 
-static void	save_rest(int fd, char rests[1024][BUFFER_SIZE], char buffer[BUFFER_SIZE])
+static void	save_rest(int fd, char rests[1025][BUFFER_SIZE], \
+char buffer[BUFFER_SIZE])
 {
 	int	start;
 	int	len;
@@ -91,7 +95,10 @@ static void	save_rest(int fd, char rests[1024][BUFFER_SIZE], char buffer[BUFFER_
 	while (buffer[start] != '\0' && buffer[start] != '\n')
 		start++;
 	if (buffer[start] == '\0')
+	{
+		rests[fd][0] = '\0';
 		return ;
+	}
 	start++;
 	len = 0;
 	while (buffer[start + len] && (start + len) < BUFFER_SIZE)
@@ -107,15 +114,15 @@ static void	save_rest(int fd, char rests[1024][BUFFER_SIZE], char buffer[BUFFER_
 
 char	*get_next_line(int fd)
 {
-	static char	rests[1024][BUFFER_SIZE];
-	char			buffer[BUFFER_SIZE];
-	char			*line;
+	static char	rests[1025][BUFFER_SIZE];
+	char		buffer[BUFFER_SIZE + 1];
+	char		*line;
 
-	if (fd > 1024 || fd < 0 || BUFFER_SIZE < 1)
+	if (fd > 1025 || fd < 0 || BUFFER_SIZE < 1)
 		return (NULL);
 	buffer[0] = '\0';
 	load_buffer(fd, rests, buffer);
-	line = load_line(fd, rests, buffer);
+	line = load_line(fd, rests, buffer, NULL);
 	if (line)
 		save_rest(fd, rests, buffer);
 	return (line);
@@ -130,7 +137,7 @@ int	main(void)
 	int	index = 1;
 	int	fd1 = open("test1.txt", O_RDONLY);
 	int	fd2 = open("test2.txt", O_RDONLY);
-	int	fd3 = open("test3.txt", O_RDONLY);
+	int	fd3 = open("test.txt", O_RDONLY);
 	char	*line = get_next_line(fd1);
 	char	*line2 = get_next_line(fd2);
 	char	*line3 = get_next_line(fd3);
@@ -156,7 +163,7 @@ int	main(int argc, char **argv)
 	int		fd1 = open(argv[1], O_RDONLY);
 	char	*line = get_next_line(fd1);
 
-	while (index < 2)
+	while (line)
 	{
 		printf("line %i : %s", index, line);
 		free(line);
